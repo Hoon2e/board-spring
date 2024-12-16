@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hoon.article.mapper.ArticleMapper">
+    <select id="findById" resultType="Article">
+        SELECT *
+        FROM articles
+        WHERE user_id = #{id}
+    </select>
+    
+    <select id="findByTitle" resultType="Article">
+    	SELECT *
+    	FROM articles
+    	WHERE title = #{title}
+    </select>
+    
+    <insert id="save" useGeneratedKeys="true" keyProperty="articleId">
+    	INSERT INTO articles
+    	(title, content, author_id)
+    	values (#{title}, #{content}, #{authorId})
+    </insert>
+    
+    <select id="findAll" resultType="Article" >
+    	SELECT * 
+    	FROM articles
+    </select>
+    
+    <delete id="delete">
+    	DELETE FROM articles WHERE user_id=#{id}
+    </delete>
+</mapper>
