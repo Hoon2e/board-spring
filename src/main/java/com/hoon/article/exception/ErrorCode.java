@@ -16,7 +16,10 @@ public enum ErrorCode {
 	LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "E7", "계정 혹은 비밀번호가 틀립니다."),
 	VALIDATION_FAIL(HttpStatus.BAD_REQUEST, "E8", "유효성 검증이 실패 했습니다."),
 	
-	ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "A1", "존재하지 않는 아티클입니다.");
+	AUTH_FAIL(HttpStatus.UNAUTHORIZED, "E9", "인증이 실패했습니다."),
+	
+	ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "A1", "존재하지 않는 아티클입니다.")
+	;
 
 	private final String message;
 	private final String code;
