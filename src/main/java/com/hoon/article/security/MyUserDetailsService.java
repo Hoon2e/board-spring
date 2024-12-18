@@ -12,7 +12,6 @@ import com.hoon.article.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@Component
 public class MyUserDetailsService implements UserDetailsService {
 	private final UserRepository userRepository;
 

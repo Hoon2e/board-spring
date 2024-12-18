@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class UserController {
 	private final UserService userService;
+	private final SecurityContextRepository securityContextRepository;
 	
 	@PostMapping("/register")
 	public ResponseEntity<ResponseDto<Long>> registerUser(@Valid @RequestBody UserCreateDto userCreateDto) {
@@ -43,9 +45,11 @@ public class UserController {
 	}
 	
 	@PostMapping("/login")
-	public ResponseEntity<ResponseDto<UserResponseDto>> loginUser(@RequestBody UserLoginDto userLoginDto, HttpServletRequest request)
+	public ResponseEntity<ResponseDto<UserResponseDto>> loginUser(@RequestBody UserLoginDto userLoginDto, HttpServletRequest request, HttpServletResponse response)
 	{
-		UserResponseDto userResponseDto = userService.login(userLoginDto, request);
+		UserResponseDto userResponseDto = userService.login(userLoginDto, request, response);
+		
+		
 		ResponseDto<UserResponseDto> res = ResponseDto.success(userResponseDto);
 		
 		return ResponseEntity.status(res.getStatusCode()).body(res);

@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,8 @@ public class UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
-
+	private final SecurityContextRepository securityContextRepository;
+	
 	public Long registerUser(UserCreateDto userCreateDto) {
 		boolean isExistUser = userRepository.isExistByUsernameOrEmail(userCreateDto.getUsername(),
 				userCreateDto.getEmail());
@@ -58,25 +60,21 @@ public class UserService {
 		}
 	}
 
-	public UserResponseDto login(UserLoginDto loginDto, HttpServletRequest request) {
+	public UserResponseDto login(UserLoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
 	    try {
+	    	
 	        Authentication authentication = authenticationManager.authenticate(
 	            new UsernamePasswordAuthenticationToken(
 	                loginDto.getUsername(),
 	                loginDto.getPassword()
 	            )
 	        );
+	        
 
 	        // SecurityContext에 인증 정보 설정
-	        SecurityContext context = SecurityContextHolder.getContext();
+	        SecurityContext context = SecurityContextHolder.createEmptyContext();
 	        context.setAuthentication(authentication);
-
-	        // SecurityContext를 세션에 저장
-	        request.getSession(true).setAttribute(
-	            HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-	            context
-	        );
-
+	        securityContextRepository.saveContext(context, request, response);
 	        // 인증된 사용자 정보 반환
 	        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
 	        return UserResponseDto.FromEntity(myUserDetails.getUser());

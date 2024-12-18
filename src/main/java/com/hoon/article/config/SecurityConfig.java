@@ -3,26 +3,24 @@ package com.hoon.article.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
 
+import com.hoon.article.repository.UserRepository;
 import com.hoon.article.security.MyUserDetailsService;
 
 import lombok.RequiredArgsConstructor;
-
-import static org.springframework.security.config.Customizer.withDefaults;
 
 @Profile("!test")
 @Configuration
@@ -30,29 +28,56 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 public class SecurityConfig {
 	private final CorsConfig corsConfig;
+	private final UserRepository userRepository;
 	
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
 		http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(
 				auth -> auth
-//				.requestMatchers("/api/user/**").permitAll()
+				.requestMatchers("/api/user/**").permitAll()
 //				.anyRequest().authenticated()
 				.anyRequest().permitAll()
+				);
+		http.securityContext(securityContext -> securityContext
+				.securityContextRepository(delegatingSecurityContextRepository())
+				.requireExplicitSave(true)
 				);
 		http.cors(cors -> cors
 				.configurationSource(corsConfig.corsConfigurationSource()));
 	
 		return http.build();
 	}
-
+	
 	@Bean
-	public PasswordEncoder getPasswordEncoder() {
-		return new BCryptPasswordEncoder();
+	public DelegatingSecurityContextRepository delegatingSecurityContextRepository() {
+	    return new DelegatingSecurityContextRepository(
+	            new RequestAttributeSecurityContextRepository(),
+	            new HttpSessionSecurityContextRepository()
+	    );
 	}
 
 	@Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+	public AuthenticationProvider daoAuthenticationProvider() {
+		DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+		daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+		daoAuthenticationProvider.setUserDetailsService(userDetailsService());
+		return daoAuthenticationProvider;
+	}
+	
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+	@Bean
+	public UserDetailsService userDetailsService() {
+		return new MyUserDetailsService(userRepository);
+	}
+
+	@Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+		return http.getSharedObject(AuthenticationManagerBuilder.class)
+				.authenticationProvider(daoAuthenticationProvider())
+		 .build();
     }
 }
