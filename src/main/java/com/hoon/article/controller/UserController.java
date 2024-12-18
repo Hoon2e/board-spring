@@ -1,13 +1,8 @@
 package com.hoon.article.controller;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +15,6 @@ import com.hoon.article.dto.user.UserCreateDto;
 import com.hoon.article.dto.user.UserLoginDto;
 import com.hoon.article.dto.user.UserResponseDto;
 import com.hoon.article.exception.AuthFailException;
-import com.hoon.article.exception.ErrorCode;
 import com.hoon.article.security.MyUserDetails;
 import com.hoon.article.service.UserService;
 
@@ -35,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class UserController {
 	private final UserService userService;
-	private final SecurityContextRepository securityContextRepository;
 	
 	@PostMapping("/register")
 	public ResponseEntity<ResponseDto<Long>> registerUser(@Valid @RequestBody UserCreateDto userCreateDto) {

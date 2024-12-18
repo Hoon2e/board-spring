@@ -13,9 +13,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.context.DelegatingSecurityContextRepository;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices.RememberMeTokenAlgorithm;
 
 import com.hoon.article.repository.UserRepository;
 import com.hoon.article.security.MyUserDetailsService;
@@ -39,22 +39,20 @@ public class SecurityConfig {
 //				.anyRequest().authenticated()
 				.anyRequest().permitAll()
 				);
-		http.securityContext(securityContext -> securityContext
-				.securityContextRepository(delegatingSecurityContextRepository())
-				.requireExplicitSave(true)
+		http.rememberMe(remember -> remember
+				.rememberMeServices(rememberMeServices())
 				);
 		http.cors(cors -> cors
 				.configurationSource(corsConfig.corsConfigurationSource()));
-	
 		return http.build();
 	}
 	
 	@Bean
-	public DelegatingSecurityContextRepository delegatingSecurityContextRepository() {
-	    return new DelegatingSecurityContextRepository(
-	            new RequestAttributeSecurityContextRepository(),
-	            new HttpSessionSecurityContextRepository()
-	    );
+	public RememberMeServices rememberMeServices() {
+	    TokenBasedRememberMeServices rememberMeServices = new TokenBasedRememberMeServices("myAppKey", userDetailsService());
+	    rememberMeServices.setTokenValiditySeconds(604800); // 1주일
+	    rememberMeServices.setAlwaysRemember(true);
+	    return rememberMeServices;
 	}
 
 	@Bean

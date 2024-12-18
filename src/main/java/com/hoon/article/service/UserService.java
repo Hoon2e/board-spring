@@ -6,7 +6,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -34,7 +36,9 @@ public class UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
-	private final SecurityContextRepository securityContextRepository;
+	private final RememberMeServices rememberMeService;
+	private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+	private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder.getContextHolderStrategy();
 	
 	public Long registerUser(UserCreateDto userCreateDto) {
 		boolean isExistUser = userRepository.isExistByUsernameOrEmail(userCreateDto.getUsername(),
@@ -53,10 +57,11 @@ public class UserService {
 	}
 	
 	public void logout(HttpServletRequest request, HttpServletResponse response) {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Authentication authentication = securityContextHolderStrategy.getContext().getAuthentication();
 		if(authentication != null)
 		{
 			new SecurityContextLogoutHandler().logout(request, response, authentication);
+			rememberMeService.loginFail(request, response);
 		}
 	}
 
@@ -72,13 +77,19 @@ public class UserService {
 	        
 
 	        // SecurityContext에 인증 정보 설정
-	        SecurityContext context = SecurityContextHolder.createEmptyContext();
+	        SecurityContext context = securityContextHolderStrategy.createEmptyContext();
 	        context.setAuthentication(authentication);
 	        securityContextRepository.saveContext(context, request, response);
+	        securityContextHolderStrategy.setContext(context);
+	        
+	        rememberMeService.loginSuccess(request, response, authentication);
+	        
 	        // 인증된 사용자 정보 반환
 	        MyUserDetails myUserDetails = (MyUserDetails) authentication.getPrincipal();
 	        return UserResponseDto.FromEntity(myUserDetails.getUser());
 	    } catch (AuthenticationException e) {
+	    	securityContextHolderStrategy.clearContext();
+	    	rememberMeService.loginFail(request, response);
 	        throw new LoginFailException();
 	    }
 	}
