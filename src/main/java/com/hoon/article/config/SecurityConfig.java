@@ -36,8 +36,8 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable()).authorizeHttpRequests(
 				auth -> auth
 				.requestMatchers("/api/user/**").permitAll()
-//				.anyRequest().authenticated()
-				.anyRequest().permitAll()
+				.anyRequest().authenticated()
+//				.anyRequest().permitAll()
 				);
 		http.rememberMe(remember -> remember
 				.rememberMeServices(rememberMeServices())

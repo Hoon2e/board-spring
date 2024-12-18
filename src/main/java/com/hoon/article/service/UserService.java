@@ -74,7 +74,6 @@ public class UserService {
 	                loginDto.getPassword()
 	            )
 	        );
-	        
 
 	        // SecurityContext에 인증 정보 설정
 	        SecurityContext context = securityContextHolderStrategy.createEmptyContext();
